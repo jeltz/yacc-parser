@@ -5,6 +5,7 @@ use crate::token::Token;
 pub struct Lexer<'a> {
     input: &'a str,
     pos: usize,
+    percent_percent_count: usize,
 }
 
 impl<'a> Iterator for Lexer<'a> {
@@ -98,6 +99,13 @@ impl<'a> Iterator for Lexer<'a> {
                     match chars.next()? {
                         '%' => {
                             self.advance();
+                            self.percent_percent_count += 1;
+                            if self.percent_percent_count >= 2 {
+                                while let Some(_) = chars.next() {
+                                    self.advance();
+                                }
+                                break Token::Epilogue;
+                            }
                             break Token::PercentPercent;
                         }
                         '{' => {
@@ -201,7 +209,11 @@ impl<'a> Iterator for Lexer<'a> {
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
-        Lexer { input, pos: 0 }
+        Lexer {
+            input,
+            pos: 0,
+            percent_percent_count: 0,
+        }
     }
 
     fn advance(&mut self) {

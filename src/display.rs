@@ -8,11 +8,13 @@ impl std::fmt::Display for Grammar {
         for directive in &self.directives {
             writeln!(f, "{}", directive)?;
         }
+        writeln!(f, "%%")?;
         for rule in &self.rules {
             writeln!(f, "{}", rule)?;
         }
-        for program in self.programs.lines() {
-            writeln!(f, "{}", program)?;
+        writeln!(f, "%%")?;
+        for line in self.epilogue.lines() {
+            writeln!(f, "{}", line)?;
         }
         Ok(())
     }

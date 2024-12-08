@@ -3,7 +3,7 @@
 pub struct Grammar {
     pub directives: Vec<Directive>,
     pub rules: Vec<Rule>,
-    pub programs: String,
+    pub epilogue: String,
 }
 
 #[derive(Debug)]

@@ -260,7 +260,6 @@ impl<'a> Parser<'a> {
         Rule { name, alternatives }
     }
 
-    // Parse all rules
     fn parse_rules(&mut self) -> Vec<Rule> {
         let mut rules = Vec::new();
         while let Token::Ident = self.peek().data {
@@ -269,28 +268,22 @@ impl<'a> Parser<'a> {
         rules
     }
 
-    // Parse the optional programs/code section
-    #[allow(dead_code)]
-    fn parse_programs(&mut self) -> String {
-        if let Token::Code = self.peek().data {
-            let code = self.expect(Token::Code);
-            self.input[code.span.clone()].to_string()
-        } else {
-            String::new()
-        }
+    fn parse_epilogue(&mut self) -> String {
+        let epilogue = self.expect(Token::Epilogue);
+        //self.expect(Token::Eof); // TODO: Broken
+        self.input[epilogue.span.start + 2..epilogue.span.end].to_string()
     }
 
     pub fn parse_grammar(&mut self) -> Grammar {
         let declarations = self.parse_directives();
         self.expect(Token::PercentPercent);
         let rules = self.parse_rules();
-        // let programs = self.parse_programs();
-        // self.expect(Token::Eof);
+        let epilogue = self.parse_epilogue();
 
         Grammar {
             directives: declarations,
             rules,
-            programs: String::new(),
+            epilogue,
         }
     }
 }

@@ -9,6 +9,7 @@ pub enum Token {
     SemiColon,      // ;
     Code,           // { ... }
     Prologue,       // %{ ... %}
+    Epilogue,       // Everything after the second %%
     Ident,          // [a-zA-Z_][a-zA-Z0-9_]*|'.'
     String,         // '...'
     Eof,            // End of file
