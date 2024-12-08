@@ -8,6 +8,7 @@ pub enum Token {
     Colon,          // :
     SemiColon,      // ;
     Code,           // { ... }
+    Prologue,       // %{ ... %}
     Ident,          // [a-zA-Z_][a-zA-Z0-9_]*|'.'
     String,         // '...'
     Eof,            // End of file

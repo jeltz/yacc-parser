@@ -100,6 +100,21 @@ impl<'a> Iterator for Lexer<'a> {
                             self.advance();
                             break Token::PercentPercent;
                         }
+                        '{' => {
+                            self.advance();
+                            loop {
+                                let c = chars.next()?;
+                                self.advance();
+                                if c == '%' {
+                                    let c = chars.next()?;
+                                    self.advance();
+                                    if c == '}' {
+                                        break;
+                                    }
+                                }
+                            }
+                            break Token::Prologue;
+                        }
                         'a'..='z' | 'A'..='Z' => {
                             self.advance();
                             while let Some(c) = chars.next() {

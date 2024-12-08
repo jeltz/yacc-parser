@@ -65,10 +65,12 @@ impl<'a> Parser<'a> {
     fn parse_directives(&mut self) -> Vec<Directive> {
         let mut prelude = Vec::new();
         loop {
-            if let Token::Directive = self.peek().data {
-                prelude.push(self.parse_directive());
-            } else {
-                break;
+            match self.peek().data {
+                Token::Directive => prelude.push(self.parse_directive()),
+                Token::Prologue => {
+                    self.expect(Token::Prologue);
+                }
+                _ => break,
             }
         }
         prelude
