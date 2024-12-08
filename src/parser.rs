@@ -44,7 +44,7 @@ impl<'a> Parser<'a> {
         );
     }
 
-    fn text(&mut self, spanned: Spanned<Token>) -> &str {
+    fn text(&self, spanned: Spanned<Token>) -> &str {
         &self.input[spanned.span.clone()]
     }
 
