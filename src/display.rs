@@ -80,7 +80,7 @@ impl std::fmt::Display for Rule {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "{}:", self.name)?;
         for alternative in &self.alternatives {
-            writeln!(f, "    | {}", alternative)?;
+            writeln!(f, "    |{}", alternative)?;
         }
         writeln!(f, ";")
     }
@@ -88,11 +88,11 @@ impl std::fmt::Display for Rule {
 
 impl std::fmt::Display for Alternative {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (i, element) in self.elements.iter().enumerate() {
-            if i > 0 {
-                write!(f, " ")?;
-            }
-            write!(f, "{}", element)?;
+        for element in self.elements.iter() {
+            write!(f, " {}", element)?;
+        }
+        if let Some(precedence) = &self.precedence {
+            write!(f, " %prec {}", precedence)?;
         }
         if let Some(action) = &self.action {
             write!(f, " {}", action)?;
