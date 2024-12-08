@@ -86,5 +86,6 @@ pub struct Rule {
 #[derive(Debug)]
 pub struct Alternative {
     pub elements: Vec<String>,
+    pub precedence: Option<String>,
     pub action: Option<String>,
 }

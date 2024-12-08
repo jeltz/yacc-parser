@@ -218,6 +218,17 @@ impl<'a> Parser<'a> {
                 }
             }
 
+            let precedence = if let Token::Directive = self.peek().data {
+                let directive = &self.input[self.expect(Token::Directive).span.clone()];
+                if directive != "%prec" {
+                    panic!("Excepted %prec, got {}", directive);
+                }
+                let prec = self.expect(Token::Ident);
+                Some(self.input[prec.span.clone()].to_string())
+            } else {
+                None
+            };
+
             let action = if let Token::Code = self.peek().data {
                 let code = self.expect(Token::Code);
                 Some(self.input[code.span.clone()].to_string())
@@ -225,7 +236,11 @@ impl<'a> Parser<'a> {
                 None
             };
 
-            alternatives.push(Alternative { elements, action });
+            alternatives.push(Alternative {
+                elements,
+                precedence,
+                action,
+            });
 
             // Check if there are more alternatives
             match self.peek().data {
