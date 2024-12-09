@@ -135,12 +135,8 @@ impl<'a> Parser<'a> {
                     None
                 };
                 let mut rule_names = Vec::new();
-                loop {
-                    if let Some(ident) = self.rule_name() {
-                        rule_names.push(ident);
-                    } else {
-                        break;
-                    }
+                while let Some(ident) = self.rule_name() {
+                    rule_names.push(ident);
                 }
                 Directive::Token {
                     token_name,
@@ -149,34 +145,22 @@ impl<'a> Parser<'a> {
             }
             "%left" => {
                 let mut rule_names = Vec::new();
-                loop {
-                    if let Some(ident) = self.rule_name() {
-                        rule_names.push(ident);
-                    } else {
-                        break;
-                    }
+                while let Some(ident) = self.rule_name() {
+                    rule_names.push(ident);
                 }
                 Directive::Left { rule_names }
             }
             "%right" => {
                 let mut rule_names = Vec::new();
-                loop {
-                    if let Some(ident) = self.rule_name() {
-                        rule_names.push(ident);
-                    } else {
-                        break;
-                    }
+                while let Some(ident) = self.rule_name() {
+                    rule_names.push(ident);
                 }
                 Directive::Right { rule_names }
             }
             "%nonassoc" => {
                 let mut rule_names = Vec::new();
-                loop {
-                    if let Some(ident) = self.rule_name() {
-                        rule_names.push(ident);
-                    } else {
-                        break;
-                    }
+                while let Some(ident) = self.rule_name() {
+                    rule_names.push(ident);
                 }
                 Directive::NonAssoc { rule_names }
             }
