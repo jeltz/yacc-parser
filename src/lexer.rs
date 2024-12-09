@@ -1,10 +1,12 @@
 use crate::token::Spanned;
 use crate::token::Token;
+use core::iter::Peekable;
+use core::str::CharIndices;
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
     input: &'a str,
-    pos: usize,
+    chars: Peekable<CharIndices<'a>>,
     percent_percent_count: usize,
 }
 
@@ -12,72 +14,55 @@ impl<'a> Iterator for Lexer<'a> {
     type Item = Spanned<Token>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut chars = self.input[self.pos..].chars();
-        let mut start = self.pos;
+        let mut start = self.curr_pos();
         let token = loop {
-            let c = chars.next()?;
-            match c {
+            match self.chars.next()?.1 {
+                // '<char>'
                 '\'' => {
-                    self.advance();
-                    chars.next().expect("unexpected end of input");
-                    self.advance();
-                    let c = chars.next().expect("unexpected end of input");
-                    self.advance();
+                    self.chars.next().expect("unexpected end of input");
+                    let c = self.chars.next().expect("unexpected end of input").1;
                     if c == '\'' {
                         break Token::Char;
                     }
                     break Token::Err;
                 }
-                // '<char>'
-                '/' => {
-                    self.advance();
-                    match chars.next()? {
-                        '/' => {
-                            self.advance();
-                            while let Some(c) = chars.next() {
-                                if c == '\n' {
+                '/' => match self.chars.next()?.1 {
+                    '/' => {
+                        while let Some((_, c)) = self.chars.next() {
+                            if c == '\n' {
+                                break;
+                            }
+                        }
+                        start = self.curr_pos();
+                        continue;
+                    }
+                    '*' => {
+                        loop {
+                            let c = self.chars.next().expect("unexpected end of input").1;
+                            if c == '*' {
+                                let c = self.chars.peek().expect("unexpected end of input").1;
+                                if c == '/' {
+                                    self.chars.next();
                                     break;
                                 }
-                                self.advance();
                             }
-                            start = self.pos;
-                            continue;
                         }
-                        '*' => {
-                            self.advance();
-                            loop {
-                                let c = chars.next().expect("unexpected end of input");
-                                self.advance();
-                                if c == '*' {
-                                    let c = chars.next().expect("unexpected end of input");
-                                    if c == '/' {
-                                        self.advance();
-                                        break;
-                                    } else {
-                                        chars = self.input[self.pos..].chars();
-                                    }
-                                }
-                            }
-                            start = self.pos;
-                            continue;
-                        }
-                        _ => break Token::Err,
+                        start = self.curr_pos();
+                        continue;
                     }
-                }
+                    _ => break Token::Err,
+                },
                 '\n' | ' ' | '\t' => {
-                    self.advance();
-                    start = self.pos;
+                    start = self.curr_pos();
                     continue;
                 }
                 '=' => {
-                    self.advance();
                     break Token::Equal;
                 }
                 '0'..='9' => {
-                    self.advance();
-                    while let Some(c) = chars.next() {
+                    while let Some((_, c)) = self.chars.peek() {
                         if c.is_ascii_digit() {
-                            self.advance();
+                            self.chars.next();
                             continue;
                         }
                         break;
@@ -85,81 +70,64 @@ impl<'a> Iterator for Lexer<'a> {
                     break Token::Number;
                 }
                 '"' => {
-                    self.advance();
                     loop {
-                        let c = chars.next().expect("unexpected end of input");
-                        self.advance();
+                        let c = self.chars.next().expect("unexpected end of input").1;
                         if c == '"' {
                             break;
                         }
                     }
                     break Token::String;
                 }
-                '%' => {
-                    self.advance();
-                    match chars.next()? {
-                        '%' => {
-                            self.advance();
-                            self.percent_percent_count += 1;
-                            if self.percent_percent_count >= 2 {
-                                while let Some(_) = chars.next() {
-                                    self.advance();
-                                }
-                                break Token::Epilogue;
-                            }
-                            break Token::PercentPercent;
+                '%' => match self.chars.next()?.1 {
+                    '%' => {
+                        self.percent_percent_count += 1;
+                        if self.percent_percent_count >= 2 {
+                            while let Some(_) = self.chars.next() {}
+                            break Token::Epilogue;
                         }
-                        '{' => {
-                            self.advance();
-                            loop {
-                                let c = chars.next().expect("unexpected end of input");
-                                self.advance();
-                                if c == '%' {
-                                    let c = chars.next().expect("unexpected end of input");
-                                    self.advance();
-                                    if c == '}' {
-                                        break;
-                                    }
-                                }
-                            }
-                            break Token::Prologue;
-                        }
-                        'a'..='z' | 'A'..='Z' => {
-                            self.advance();
-                            while let Some(c) = chars.next() {
-                                if c.is_ascii_alphanumeric() || c == '_' || c == '-' {
-                                    self.advance();
-                                    continue;
-                                }
-                                break;
-                            }
-                            break Token::Directive;
-                        }
-                        _ => {
-                            self.advance();
-                            break Token::Err;
-                        }
+                        break Token::PercentPercent;
                     }
-                }
+                    '{' => {
+                        loop {
+                            let c = self.chars.next().expect("unexpected end of input").1;
+                            if c == '%' {
+                                let c = self.chars.peek().expect("unexpected end of input").1;
+                                if c == '}' {
+                                    self.chars.next();
+                                    break;
+                                }
+                            }
+                        }
+                        break Token::Prologue;
+                    }
+                    'a'..='z' | 'A'..='Z' => {
+                        while let Some((_, c)) = self.chars.peek() {
+                            if c.is_ascii_alphanumeric() || *c == '_' || *c == '-' {
+                                self.chars.next();
+                                continue;
+                            }
+                            break;
+                        }
+                        break Token::Directive;
+                    }
+                    _ => {
+                        break Token::Err;
+                    }
+                },
                 '|' => {
-                    self.advance();
                     break Token::Bar;
                 }
                 ':' => {
-                    self.advance();
                     break Token::Colon;
                 }
                 ';' => {
-                    self.advance();
                     break Token::SemiColon;
                 }
                 // {...}
                 '{' => {
-                    self.advance();
                     let mut depth = 1;
                     loop {
-                        let c = chars.next().expect("unexpected end of input");
-                        self.advance();
+                        let c = self.chars.next().expect("unexpected end of input").1;
                         match c {
                             '{' => depth += 1,
                             '}' => {
@@ -174,11 +142,10 @@ impl<'a> Iterator for Lexer<'a> {
                     break Token::Code;
                 }
                 'a'..='z' | 'A'..='Z' => {
-                    self.advance();
-                    while let Some(c) = chars.next() {
+                    while let Some((_, c)) = self.chars.peek() {
                         match c {
                             'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
-                                self.advance();
+                                self.chars.next();
                                 continue;
                             }
                             _ => break,
@@ -187,10 +154,8 @@ impl<'a> Iterator for Lexer<'a> {
                     break Token::Ident;
                 }
                 '<' => {
-                    self.advance();
                     break loop {
-                        let c = chars.next().expect("unexpected end of input");
-                        self.advance();
+                        let c = self.chars.next().expect("unexpected end of input").1;
                         match c {
                             'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => continue,
                             '>' => break Token::Type,
@@ -199,12 +164,11 @@ impl<'a> Iterator for Lexer<'a> {
                     };
                 }
                 _ => {
-                    self.advance();
                     break Token::Err;
                 }
             };
         };
-        Some(Spanned::new(token, start..self.pos))
+        Some(Spanned::new(token, start..self.curr_pos()))
     }
 }
 
@@ -212,12 +176,12 @@ impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
         Lexer {
             input,
-            pos: 0,
+            chars: input.char_indices().peekable(),
             percent_percent_count: 0,
         }
     }
 
-    fn advance(&mut self) {
-        self.pos += 1;
+    fn curr_pos(&mut self) -> usize {
+        self.chars.peek().map_or(self.input.len(), |c| c.0)
     }
 }
