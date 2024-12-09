@@ -86,7 +86,8 @@ impl<'a> Iterator for Lexer<'a> {
                 }
                 '"' => {
                     self.advance();
-                    while let Some(c) = chars.next() {
+                    loop {
+                        let c = chars.next().expect("unexpected end of input");
                         self.advance();
                         if c == '"' {
                             break;
@@ -111,10 +112,10 @@ impl<'a> Iterator for Lexer<'a> {
                         '{' => {
                             self.advance();
                             loop {
-                                let c = chars.next()?;
+                                let c = chars.next().expect("unexpected end of input");
                                 self.advance();
                                 if c == '%' {
-                                    let c = chars.next()?;
+                                    let c = chars.next().expect("unexpected end of input");
                                     self.advance();
                                     if c == '}' {
                                         break;
