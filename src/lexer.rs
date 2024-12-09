@@ -15,13 +15,14 @@ impl<'a> Iterator for Lexer<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let mut start = self.curr_pos();
-        let token = loop {
+        let token = 'outer: loop {
             match self.chars.next()?.1 {
                 // '<char>'
                 '\'' => {
-                    self.chars.next().expect("unexpected end of input");
-                    let c = self.chars.next().expect("unexpected end of input").1;
-                    if c == '\'' {
+                    if self.chars.next() == None {
+                        break Token::Err;
+                    }
+                    if let Some((_, '\'')) = self.chars.next() {
                         break Token::Char;
                     }
                     break Token::Err;
@@ -38,12 +39,20 @@ impl<'a> Iterator for Lexer<'a> {
                     }
                     '*' => {
                         loop {
-                            let c = self.chars.next().expect("unexpected end of input").1;
-                            if c == '*' {
-                                let c = self.chars.peek().expect("unexpected end of input").1;
-                                if c == '/' {
-                                    self.chars.next();
-                                    break;
+                            match self.chars.next() {
+                                Some((_, '*')) => match self.chars.peek() {
+                                    Some((_, '/')) => {
+                                        self.chars.next();
+                                        break;
+                                    }
+                                    Some(_) => {}
+                                    None => {
+                                        break 'outer Token::Err;
+                                    }
+                                },
+                                Some(_) => {}
+                                None => {
+                                    break 'outer Token::Err;
                                 }
                             }
                         }
@@ -70,13 +79,17 @@ impl<'a> Iterator for Lexer<'a> {
                     break Token::Number;
                 }
                 '"' => {
-                    loop {
-                        let c = self.chars.next().expect("unexpected end of input").1;
-                        if c == '"' {
-                            break;
+                    break loop {
+                        match self.chars.next() {
+                            Some((_, '"')) => {
+                                break Token::String;
+                            }
+                            Some(_) => {}
+                            None => {
+                                break Token::Err;
+                            }
                         }
                     }
-                    break Token::String;
                 }
                 '%' => match self.chars.next()?.1 {
                     '%' => {
@@ -88,17 +101,24 @@ impl<'a> Iterator for Lexer<'a> {
                         break Token::PercentPercent;
                     }
                     '{' => {
-                        loop {
-                            let c = self.chars.next().expect("unexpected end of input").1;
-                            if c == '%' {
-                                let c = self.chars.peek().expect("unexpected end of input").1;
-                                if c == '}' {
-                                    self.chars.next();
-                                    break;
+                        break loop {
+                            match self.chars.next() {
+                                Some((_, '%')) => match self.chars.peek() {
+                                    Some((_, '}')) => {
+                                        self.chars.next();
+                                        break Token::Prologue;
+                                    }
+                                    Some(_) => {}
+                                    None => {
+                                        break Token::Err;
+                                    }
+                                },
+                                Some(_) => {}
+                                None => {
+                                    break Token::Err;
                                 }
                             }
                         }
-                        break Token::Prologue;
                     }
                     'a'..='z' | 'A'..='Z' => {
                         while let Some((_, c)) = self.chars.peek() {
@@ -126,20 +146,21 @@ impl<'a> Iterator for Lexer<'a> {
                 // {...}
                 '{' => {
                     let mut depth = 1;
-                    loop {
-                        let c = self.chars.next().expect("unexpected end of input").1;
-                        match c {
-                            '{' => depth += 1,
-                            '}' => {
+                    break loop {
+                        match self.chars.next() {
+                            Some((_, '{')) => depth += 1,
+                            Some((_, '}')) => {
                                 depth -= 1;
                                 if depth == 0 {
-                                    break;
+                                    break Token::Code;
                                 }
                             }
-                            _ => {}
+                            Some(_) => {}
+                            None => {
+                                break Token::Err;
+                            }
                         }
-                    }
-                    break Token::Code;
+                    };
                 }
                 'a'..='z' | 'A'..='Z' => {
                     while let Some((_, c)) = self.chars.peek() {
@@ -155,10 +176,9 @@ impl<'a> Iterator for Lexer<'a> {
                 }
                 '<' => {
                     break loop {
-                        let c = self.chars.next().expect("unexpected end of input").1;
-                        match c {
-                            'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => continue,
-                            '>' => break Token::Type,
+                        match self.chars.next() {
+                            Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_')) => continue,
+                            Some((_, '>')) => break Token::Type,
                             _ => break Token::Err,
                         }
                     };
