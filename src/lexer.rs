@@ -27,8 +27,8 @@ impl<'a> Iterator for Lexer<'a> {
                     }
                     break Token::Err;
                 }
-                '/' => match self.chars.next()?.1 {
-                    '/' => {
+                '/' => match self.chars.next() {
+                    Some((_, '/')) => {
                         for (_, c) in self.chars.by_ref() {
                             if c == '\n' {
                                 break;
@@ -37,7 +37,7 @@ impl<'a> Iterator for Lexer<'a> {
                         start = self.curr_pos();
                         continue;
                     }
-                    '*' => {
+                    Some((_, '*')) => {
                         loop {
                             match self.chars.next() {
                                 Some((_, '*')) => match self.chars.peek() {
@@ -87,8 +87,8 @@ impl<'a> Iterator for Lexer<'a> {
                         }
                     }
                 }
-                '%' => match self.chars.next()?.1 {
-                    '%' => {
+                '%' => match self.chars.next() {
+                    Some((_, '%')) => {
                         self.percent_percent_count += 1;
                         if self.percent_percent_count >= 2 {
                             for _ in self.chars.by_ref() {}
@@ -96,7 +96,7 @@ impl<'a> Iterator for Lexer<'a> {
                         }
                         break Token::PercentPercent;
                     }
-                    '{' => {
+                    Some((_, '{')) => {
                         break loop {
                             match self.chars.next() {
                                 Some((_, '%')) => match self.chars.peek() {
@@ -116,7 +116,7 @@ impl<'a> Iterator for Lexer<'a> {
                             }
                         }
                     }
-                    'a'..='z' | 'A'..='Z' => {
+                    Some((_, 'a'..='z' | 'A'..='Z')) => {
                         while let Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-')) =
                             self.chars.peek()
                         {
