@@ -34,8 +34,6 @@ impl<'a> Iterator for Lexer<'a> {
                                 break;
                             }
                         }
-                        start = self.curr_pos();
-                        continue;
                     }
                     Some((_, '*')) => {
                         loop {
@@ -56,15 +54,10 @@ impl<'a> Iterator for Lexer<'a> {
                                 }
                             }
                         }
-                        start = self.curr_pos();
-                        continue;
                     }
                     _ => break Token::Err,
                 },
-                '\n' | ' ' | '\t' => {
-                    start = self.curr_pos();
-                    continue;
-                }
+                '\n' | ' ' | '\t' => {}
                 '=' => {
                     break Token::Equal;
                 }
@@ -176,6 +169,7 @@ impl<'a> Iterator for Lexer<'a> {
                     break Token::Err;
                 }
             };
+            start = self.curr_pos();
         };
         Some(Spanned::new(token, start..self.curr_pos()))
     }
