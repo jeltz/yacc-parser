@@ -62,18 +62,17 @@ impl<'a> Parser<'a> {
         spanned
     }
 
-    fn parse_directives(&mut self) -> Vec<Directive> {
-        let mut prelude = Vec::new();
+    fn parse_head(&mut self) -> (Vec<Directive>, Vec<String>) {
+        let mut directives = Vec::new();
+        let mut prologues = Vec::new();
         loop {
             match self.peek().data {
-                Token::Directive => prelude.push(self.parse_directive()),
-                Token::Prologue => {
-                    self.expect(Token::Prologue);
-                }
+                Token::Directive => directives.push(self.parse_directive()),
+                Token::Prologue => prologues.push(self.parse_prologue()),
                 _ => break,
             }
         }
-        prelude
+        (directives, prologues)
     }
 
     fn parse_directive(&mut self) -> Directive {
@@ -168,6 +167,11 @@ impl<'a> Parser<'a> {
         }
     }
 
+    fn parse_prologue(&mut self) -> String {
+        let prologue = self.expect(Token::Prologue);
+        self.input[prologue.span.start + 2..prologue.span.end - 1].to_string()
+    }
+
     fn rule_name(&mut self) -> Option<String> {
         match self.peek().data {
             Token::Ident => {
@@ -259,14 +263,15 @@ impl<'a> Parser<'a> {
     }
 
     pub fn parse_grammar(&mut self) -> Grammar {
-        let declarations = self.parse_directives();
+        let (directives, prologues) = self.parse_head();
         self.expect(Token::PercentPercent);
         let rules = self.parse_rules();
         let epilogue = self.parse_epilogue();
 
         Grammar {
-            directives: declarations,
+            directives,
             rules,
+            prologues,
             epilogue,
         }
     }

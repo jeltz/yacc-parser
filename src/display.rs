@@ -8,6 +8,9 @@ impl std::fmt::Display for Grammar {
         for directive in &self.directives {
             writeln!(f, "{}", directive)?;
         }
+        for prologue in &self.prologues {
+            writeln!(f, "%{{{}%}}", prologue)?;
+        }
         writeln!(f, "%%")?;
         for rule in &self.rules {
             writeln!(f, "{}", rule)?;

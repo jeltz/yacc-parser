@@ -3,6 +3,7 @@
 pub struct Grammar {
     pub directives: Vec<Directive>,
     pub rules: Vec<Rule>,
+    pub prologues: Vec<String>,
     pub epilogue: String,
 }
 
