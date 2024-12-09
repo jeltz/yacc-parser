@@ -19,7 +19,7 @@ impl<'a> Iterator for Lexer<'a> {
             match self.chars.next()?.1 {
                 // '<char>'
                 '\'' => {
-                    if self.chars.next() == None {
+                    if self.chars.next().is_none() {
                         break Token::Err;
                     }
                     if let Some((_, '\'')) = self.chars.next() {
@@ -29,7 +29,7 @@ impl<'a> Iterator for Lexer<'a> {
                 }
                 '/' => match self.chars.next()?.1 {
                     '/' => {
-                        while let Some((_, c)) = self.chars.next() {
+                        for (_, c) in self.chars.by_ref() {
                             if c == '\n' {
                                 break;
                             }
@@ -69,12 +69,8 @@ impl<'a> Iterator for Lexer<'a> {
                     break Token::Equal;
                 }
                 '0'..='9' => {
-                    while let Some((_, c)) = self.chars.peek() {
-                        if c.is_ascii_digit() {
-                            self.chars.next();
-                            continue;
-                        }
-                        break;
+                    while let Some((_, '0'..='9')) = self.chars.peek() {
+                        self.chars.next();
                     }
                     break Token::Number;
                 }
@@ -95,7 +91,7 @@ impl<'a> Iterator for Lexer<'a> {
                     '%' => {
                         self.percent_percent_count += 1;
                         if self.percent_percent_count >= 2 {
-                            while let Some(_) = self.chars.next() {}
+                            for _ in self.chars.by_ref() {}
                             break Token::Epilogue;
                         }
                         break Token::PercentPercent;
@@ -121,12 +117,10 @@ impl<'a> Iterator for Lexer<'a> {
                         }
                     }
                     'a'..='z' | 'A'..='Z' => {
-                        while let Some((_, c)) = self.chars.peek() {
-                            if c.is_ascii_alphanumeric() || *c == '_' || *c == '-' {
-                                self.chars.next();
-                                continue;
-                            }
-                            break;
+                        while let Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-')) =
+                            self.chars.peek()
+                        {
+                            self.chars.next();
                         }
                         break Token::Directive;
                     }
@@ -163,21 +157,16 @@ impl<'a> Iterator for Lexer<'a> {
                     };
                 }
                 'a'..='z' | 'A'..='Z' => {
-                    while let Some((_, c)) = self.chars.peek() {
-                        match c {
-                            'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
-                                self.chars.next();
-                                continue;
-                            }
-                            _ => break,
-                        }
+                    while let Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_')) = self.chars.peek()
+                    {
+                        self.chars.next();
                     }
                     break Token::Ident;
                 }
                 '<' => {
                     break loop {
                         match self.chars.next() {
-                            Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_')) => continue,
+                            Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_')) => {}
                             Some((_, '>')) => break Token::Type,
                             _ => break Token::Err,
                         }
