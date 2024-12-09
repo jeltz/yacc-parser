@@ -200,7 +200,7 @@ impl<'a> Iterator for Lexer<'a> {
                 }
                 _ => {
                     self.advance();
-                    Token::Err
+                    break Token::Err;
                 }
             };
         };
