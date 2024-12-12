@@ -11,7 +11,8 @@ pub enum Token {
     Prologue,       // %{ ... %}
     Epilogue,       // Everything after the second %%
     Ident,          // [a-zA-Z_][a-zA-Z0-9_]*|'.'
-    String,         // '...'
+    String,         // "...""
+    TString,        // _("...")
     Eof,            // End of file
     Directive,      // %ident ...
     Char,           // 'a'

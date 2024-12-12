@@ -80,6 +80,30 @@ impl<'a> Iterator for Lexer<'a> {
                         }
                     }
                 }
+                '_' => {
+                    if let Some((_, '(')) = self.chars.next() {
+                        if let Some((_, '"')) = self.chars.next() {
+                            break loop {
+                                match self.chars.next() {
+                                    Some((_, '"')) => {
+                                        if let Some((_, ')')) = self.chars.next() {
+                                            break Token::TString;
+                                        }
+                                        break Token::Err;
+                                    }
+                                    Some(_) => {}
+                                    None => {
+                                        break Token::Err;
+                                    }
+                                }
+                            }
+                        } else {
+                            break Token::Err;
+                        }
+                    } else {
+                        break Token::Err;
+                    }
+                }
                 '%' => match self.chars.next() {
                     Some((_, '%')) => {
                         self.percent_percent_count += 1;
