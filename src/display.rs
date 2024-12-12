@@ -26,6 +26,14 @@ impl std::fmt::Display for Grammar {
 impl std::fmt::Display for Directive {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Directive::Code => todo!(),
+            Directive::Define => todo!(),
+            Directive::Header => todo!(),
+            Directive::Verbose => todo!(),
+            Directive::InitialAction => todo!(),
+            Directive::Printer => todo!(),
+            Directive::Destructor => todo!(),
+
             Directive::PureParser => writeln!(f, "%pure-parser"),
             Directive::Expect { number } => writeln!(f, "%expect {}", number),
             Directive::NamePrefix { prefix } => writeln!(f, "%name-prefix=\"{}\"", prefix),

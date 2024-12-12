@@ -78,6 +78,45 @@ impl<'a> Parser<'a> {
     fn parse_directive(&mut self) -> Directive {
         let directive = self.expect(Token::Directive);
         match &self.input[directive.span.clone()] {
+            "%code" => {
+                if let Token::Ident = self.peek().data {
+                    self.expect(Token::Ident);
+                }
+                self.expect(Token::Code);
+                Directive::Code
+            }
+            "%define" => {
+                self.expect(Token::Ident);
+                match self.peek().data {
+                    Token::Ident => { self.expect(Token::Ident); }
+                    Token::Code => { self.expect(Token::Code); }
+                    _ => (),
+                }
+                Directive::Define
+            }
+            "%header" => Directive::Header,
+            "%verbose" => Directive::Verbose,
+            "%initial-action" =>  {
+                self.expect(Token::Code);
+                Directive::InitialAction
+            }
+            "%printer" => {
+                self.expect(Token::Code);
+                loop {
+                    match self.peek().data {
+                        Token::Ident => { self.expect(Token::Ident); }
+                        Token::Type => { self.expect(Token::Type); }
+                        _ => { break; },
+                    }
+                }
+                Directive::Printer
+            }
+            "%destructor" => {
+                self.expect(Token::Code);
+                self.expect(Token::Type);
+                Directive::Destructor
+            }
+
             "%pure-parser" => Directive::PureParser,
             "%expect" => {
                 let number = self.expect(Token::Number);

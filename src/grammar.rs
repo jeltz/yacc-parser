@@ -9,6 +9,14 @@ pub struct Grammar {
 
 #[derive(Debug)]
 pub enum Directive {
+    Code,
+    Define,
+    Header,
+    Verbose,
+    InitialAction,
+    Printer,
+    Destructor,
+
     // %pure-parser
     // ------------
     // Tells yacc (or Bison) to generate a pure parser, which means that the parser
