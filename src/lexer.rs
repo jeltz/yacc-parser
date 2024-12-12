@@ -182,9 +182,10 @@ impl<'a> Iterator for Lexer<'a> {
                 }
                 '<' => {
                     break loop {
+                        // TODO: Nested and that weird arrow
                         match self.chars.next() {
-                            Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_')) => {}
                             Some((_, '>')) => break Token::Type,
+                            Some(_) => {}
                             _ => break Token::Err,
                         }
                     };
