@@ -152,6 +152,12 @@ impl<'a> Parser<'a> {
             }
             "%type" => {
                 let type_name = self.expect(Token::Type);
+                loop {
+                    if !matches!(self.peek().data, Token::String) {
+                        break;
+                    }
+                    self.expect(Token::String);
+                }
                 let mut rule_names = Vec::new();
                 loop {
                     if !matches!(self.peek().data, Token::Ident) {
@@ -175,6 +181,12 @@ impl<'a> Parser<'a> {
                 let mut rule_names = Vec::new();
                 while let Some(ident) = self.rule_name() {
                     rule_names.push(ident);
+                    // TODO
+                    match self.peek().data {
+                        Token::String => { self.expect(Token::String); }
+                        Token::TString => { self.expect(Token::TString); }
+                        _ => (),
+                    }
                 }
                 Directive::Token {
                     token_name,
@@ -239,6 +251,10 @@ impl<'a> Parser<'a> {
                         let element = self.expect(Token::Ident);
                         elements.push(self.input[element.span.clone()].to_string());
                     }
+                    Token::String => {
+                        let element = self.expect(Token::String);
+                        elements.push(self.input[element.span.clone()].to_string());
+                    }
                     Token::Char => {
                         let char = self.expect(Token::Char);
                         elements.push(self.input[char.span.clone()].to_string());
@@ -249,11 +265,14 @@ impl<'a> Parser<'a> {
 
             let precedence = if let Token::Directive = self.peek().data {
                 let directive = &self.input[self.expect(Token::Directive).span.clone()];
-                if directive != "%prec" {
+                if directive == "%empty" {
+                    None
+                } else if directive == "%prec" {
+                    let prec = self.expect(Token::Ident);
+                    Some(self.input[prec.span.clone()].to_string())
+                } else {
                     panic!("Excepted %prec, got {}", directive);
                 }
-                let prec = self.expect(Token::Ident);
-                Some(self.input[prec.span.clone()].to_string())
             } else {
                 None
             };
