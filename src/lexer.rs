@@ -110,7 +110,7 @@ impl<'a> Iterator for Lexer<'a> {
                         }
                     }
                     Some((_, 'a'..='z' | 'A'..='Z')) => {
-                        while let Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '-')) =
+                        while let Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '.' | '-')) =
                             self.chars.peek()
                         {
                             self.chars.next();
@@ -150,7 +150,7 @@ impl<'a> Iterator for Lexer<'a> {
                     };
                 }
                 'a'..='z' | 'A'..='Z' => {
-                    while let Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_')) = self.chars.peek()
+                    while let Some((_, 'a'..='z' | 'A'..='Z' | '0'..='9' | '_' | '.' | '-')) = self.chars.peek()
                     {
                         self.chars.next();
                     }
